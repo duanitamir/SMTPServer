@@ -142,9 +142,8 @@ public class SMTPClient {
 		int pos = buffer.position();
 		
 		socketChannel.read(buffer);
-		
+
 		for(int i = pos; i < buffer.position(); i++) {
-			
 			if(buffer.get(i) == '-' && (i == 3))
 			{
 				foundHyphen = true;
@@ -161,6 +160,7 @@ public class SMTPClient {
 				}
 			}
 		}
+		
 		
 		return false;
 	}
@@ -201,7 +201,6 @@ public class SMTPClient {
 	 * @return the response code extracted from the buffer, <code>-1</code> if no response code could be determined
 	 */
 	private static int getResponseCode(ByteBuffer buffer) {
-		
 		int blank = -1;
 		
 		for(int i = 0; i < buffer.limit(); i++) {
@@ -210,7 +209,7 @@ public class SMTPClient {
 				break;
 			}
 		}
-		
+				
 		if(blank == -1)
 			return -1;
 		
@@ -228,7 +227,7 @@ public class SMTPClient {
 			else
 				code += (digit * factor);
 		}
-		
+						
 		return code;
 	}
 	
@@ -264,6 +263,7 @@ public class SMTPClient {
 		clientChannel.write(buffer);
 		
 		buffer.clear();
+		
 	}
 	
 	/**
@@ -505,6 +505,7 @@ public class SMTPClient {
 						SMTPClientState state = new SMTPClientState();
 						generateMail(state);
 						key.attach(state);
+						System.out.println("Connectable, added "+state);
 					}
 					
 					if(key.isReadable())
@@ -512,13 +513,12 @@ public class SMTPClient {
 						SMTPClientState state = (SMTPClientState) key.attachment();
 						SocketChannel channel = (SocketChannel) key.channel();
 						
+
 						if(!readCommandLine(channel, state.getByteBuffer()))
 							continue;
 						
 						
-						
 						int responseCode = getResponseCode(state.getByteBuffer());
-						System.out.println("Received response code: " + responseCode);
 						printBuffer(state.getByteBuffer());
 						
 						if(state.getState() == SMTPClientState.HELPSENT)

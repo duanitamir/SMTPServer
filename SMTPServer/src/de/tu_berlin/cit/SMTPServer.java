@@ -23,45 +23,29 @@ public class SMTPServer {
 
 		@SuppressWarnings("unused")
 		public static void main(String[] args) throws IOException {
-
-			// Selector: multiplexor of SelectableChannel objects
-			Selector selector = Selector.open(); // selector is open here
-
-			// ServerSocketChannel: selectable channel for stream-oriented listening sockets
+			Selector selector = Selector.open();
 			ServerSocketChannel socket = ServerSocketChannel.open();
 			InetSocketAddress addr = new InetSocketAddress("127.0.0.1", 3200);
-
-			// Binds the channel's socket to a local address and configures the socket to listen for connections
 			socket.bind(addr);
-
-			// Adjusts this channel's blocking mode.
 			socket.configureBlocking(false);
 
 			int ops = socket.validOps();
 			SelectionKey selectKy = socket.register(selector, ops, null);
 
-			// Infinite loop..
-			// Keep server running
 			while (true) {
 
-				// Selects a set of keys whose corresponding channels are ready for I/O operations
 				selector.select();
 
-
-				// token representing the registration of a SelectableChannel with a Selector
 				Set<SelectionKey> keys = selector.selectedKeys();
 				Iterator<SelectionKey> iterator = keys.iterator();
 
 				while (iterator.hasNext()) {
 					SelectionKey key = iterator.next();
 
-					// Tests whether this key's channel is ready to accept a new socket connection
 					if (key.isAcceptable()) {
 						SocketChannel client = socket.accept();
 
-						// Adjusts this channel's blocking mode to false
 						client.configureBlocking(false);
-						// Operation-set bit for read operations
 						client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, 0);
 						log("Connection Accepted: " + client.getLocalAddress() + "\n");
 	
@@ -86,10 +70,12 @@ public class SMTPServer {
 							key.attach(QUITSENT);
 						} else if(result.contains("HELP")) {
 							key.attach(HELPSENT);
+						} else {
+							System.out.println("What is that?");
 						}
+						
+						System.out.println("KEY UPDATE "+key.attachment());
 
-					} else if (key.isConnectable()) {
-						log("Connectable");
 
 					} else if (key.isWritable()) {
 						SocketChannel client = (SocketChannel) key.channel();
@@ -125,10 +111,7 @@ public class SMTPServer {
 						}
 											
 
-					} else if (key.isValid()) {
-						log("Valid");
-
-					}
+					} 
 					iterator.remove();
 				}
 			}
