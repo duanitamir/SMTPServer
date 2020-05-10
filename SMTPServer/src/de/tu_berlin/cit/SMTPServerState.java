@@ -7,7 +7,7 @@ public class SMTPServerState {
     public final static int CONNECTED = 0;
     public final static int HELO_RECEIVED = 1;
     public final static int MAIL_FROM_RECEIVED = 2;
-    public final static int RECEPT_OR_ECEIVED = 3;
+    public final static int RCPT_RECEIVED = 3;
     public final static int DATA_RECEIVED = 4;
     public final static int MESSAGE_RECEIVED = 5;
     public final static int QUIT_RECEIVED= 6;

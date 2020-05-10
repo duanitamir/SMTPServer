@@ -31,7 +31,7 @@ public class SMTPServer {
                 return SERVICE_READY;
             case SMTPServerState.HELO_RECEIVED:
             case SMTPServerState.MAIL_FROM_RECEIVED:
-            case SMTPServerState.RECEPT_OR_ECEIVED:
+            case SMTPServerState.RCPT_RECEIVED:
             case SMTPServerState.MESSAGE_RECEIVED:
                 return OK;
             case SMTPServerState.DATA_RECEIVED:
@@ -114,7 +114,7 @@ public class SMTPServer {
         client.configureBlocking(false);
 
         // Operation-set bit for write data and acceptance, send state
-        client.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_WRITE | SelectionKey.OP_READ, state);
+        client.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, state);
 
         System.out.println("Huston we have a new connection in the house 🔥 " + client.getLocalAddress());
     }
@@ -124,10 +124,10 @@ public class SMTPServer {
         SMTPServerState state = (SMTPServerState) key.attachment();
         ByteBuffer buffer = state.getByteBuffer();
 
-        SocketChannel socketChannel = (SocketChannel) key.channel();
+        SocketChannel client = (SocketChannel) key.channel();
 
         buffer.clear();
-        socketChannel.read(buffer);
+        client.read(buffer);
         buffer.flip();
 
         String clientResponse = messageDecoder(buffer);
@@ -142,13 +142,15 @@ public class SMTPServer {
                 updateState(state, SMTPServerState.MAIL_FROM_RECEIVED);
                 break;
             case "RCPT":
-                updateState(state, SMTPServerState.RECEPT_OR_ECEIVED);
+                updateState(state, SMTPServerState.RCPT_RECEIVED);
                 break;
             case "DATA":
                 updateState(state, SMTPServerState.DATA_RECEIVED);
                 break;
             case "QUIT":
                 updateState(state, SMTPServerState.QUIT_RECEIVED);
+                client.close();
+                key.cancel();
                 return;
             case "HELP":
                 // if help is not requested already set
@@ -161,7 +163,7 @@ public class SMTPServer {
         }
 
         // switch roles
-        socketChannel.register(selector, SelectionKey.OP_WRITE, state);
+        client.register(selector, SelectionKey.OP_WRITE, state);
     }
 
     public static void writeMessage(Selector selector, SelectionKey key) throws IOException {
@@ -174,9 +176,12 @@ public class SMTPServer {
         byte[] messageStatus = getMessageStatus(state);
 
         buffer.clear();
+
         buffer.put(messageStatus);
         buffer.put(newLine);
+
         buffer.flip();
+
         socketChannel.write(buffer);
 
         buffer.clear();
@@ -208,11 +213,11 @@ public class SMTPServer {
                     acceptConnection(selector, key);
                 }
 
-                if(key.isReadable()) {
+                else if(key.isReadable()) {
                     readMessage(selector, key);
                 }
 
-                if(key.isWritable()) {
+                else if(key.isWritable()) {
                     writeMessage(selector, key);
                 }
 
