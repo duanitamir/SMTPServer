@@ -79,7 +79,7 @@ public class SMTPClient {
 	 * @return <code>true</code> if help command is supposed to be sent next, <code>false</code> otherwise
 	 */
 	private static boolean sendHelpNext() {
-		
+
 		if(Math.random() < 0.2)
 			return true;
 		
@@ -552,7 +552,7 @@ public class SMTPClient {
 							{
 								debugAndExit(channel, state.getByteBuffer(), responseCode);
 							}
-							
+							iter.remove();
 							continue;
 						}
 						
