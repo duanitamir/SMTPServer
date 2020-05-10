@@ -2,15 +2,9 @@ package de.tu_berlin.cit;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.StandardCharsets;
+import java.nio.*;
+import java.nio.channels.*;
+import java.nio.charset.*;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -129,7 +123,9 @@ public class SMTPServer {
         // Operation-set bit for write data and acceptance, send state
         client.register(selector, SelectionKey.OP_WRITE | SelectionKey.OP_READ, state);
 
+        System.out.println("---------------------------------------------------------------");
         System.out.println("Huston we have a new connection in the house 🔥 " + client.getLocalAddress());
+        System.out.println("---------------------------------------------------------------");
     }
 
     public static void readMessage(Selector selector, SelectionKey key) throws IOException {
