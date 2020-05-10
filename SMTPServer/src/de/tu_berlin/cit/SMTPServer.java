@@ -149,9 +149,7 @@ public class SMTPServer {
                 break;
             case "QUIT":
                 updateState(state, SMTPServerState.QUIT_RECEIVED);
-                client.close();
-                key.cancel();
-                return;
+                break;
             case "HELP":
                 // if help is not requested already set
                 if(state.getState() != SMTPServerState.HELP_RECEIVED) {
@@ -182,12 +180,17 @@ public class SMTPServer {
 
         buffer.flip();
 
+
         socketChannel.write(buffer);
 
         buffer.clear();
-
-        // change role
-        socketChannel.register(selector, SelectionKey.OP_READ, state);
+        
+        if(messageStatus == CLOSE_CHANNEL) {
+        	key.cancel();
+        } else {
+            // change role
+            socketChannel.register(selector, SelectionKey.OP_READ, state);
+        }
     }
 
     public static void main(String[] args) throws IOException {

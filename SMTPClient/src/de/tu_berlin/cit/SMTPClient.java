@@ -643,7 +643,7 @@ public class SMTPClient {
 							break;
 						case SMTPClientState.QUITSENT:
 							if(responseCode == 221) {
-								if(!key.isValid())
+								if(key.isValid())
 									System.out.println("Connection closed by foreign host");
 									key.cancel();
 									key.channel().close();
