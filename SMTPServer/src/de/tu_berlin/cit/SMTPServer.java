@@ -25,7 +25,7 @@ public class SMTPServer {
     private static byte[] OK = "250".getBytes(messageCharset);
     private static byte[] MAIL_INPUT = "354".getBytes(messageCharset);
 
-    public static byte[] getMessageStatus(de.tu_berlin.cit.SMTPServerState state) {
+    public static byte[] getMessageStatus(SMTPServerState state) {
         switch (state.getState()){
             case SMTPServerState.CONNECTED:
                 return SERVICE_READY;
@@ -42,6 +42,24 @@ public class SMTPServer {
                 return HELP;
             default:
                 throw new IllegalArgumentException(state.getState() + " is not a legal Input");
+        }
+    }
+
+    public static Integer getNextState(String clientMessageCode, SMTPServerState state) {
+        switch (clientMessageCode) {
+            case "HELO": return SMTPServerState.HELO_RECEIVED;
+            case "MAIL": return SMTPServerState.MAIL_FROM_RECEIVED;
+            case "RCPT": return SMTPServerState.RCPT_RECEIVED;
+            case "DATA": return SMTPServerState.DATA_RECEIVED;
+            case "QUIT": return SMTPServerState.QUIT_RECEIVED;
+            case "HELP":
+                // if help is not requested already, set
+                if(state.getState() != SMTPServerState.HELP_RECEIVED) {
+                    return SMTPServerState.HELP_RECEIVED;
+                } else {
+                    return -1;
+                }
+            default: return SMTPServerState.MESSAGE_RECEIVED;
         }
     }
 
@@ -62,11 +80,6 @@ public class SMTPServer {
         } catch (NumberFormatException e) {
             return DEFAULT_PORT;
         }
-    }
-
-    public static void updateState(SMTPServerState state, Integer newState) {
-        state.setPreviousState(state.getState());
-        state.setState(newState);
     }
 
     public static String messageDecoder(ByteBuffer message) throws CharacterCodingException {
@@ -134,30 +147,11 @@ public class SMTPServer {
         String clientMessageCode = clientResponse.substring(0, 4);
         System.out.print(clientResponse);
 
-        switch (clientMessageCode) {
-            case "HELO":
-                updateState(state, SMTPServerState.HELO_RECEIVED);
-                break;
-            case "MAIL":
-                updateState(state, SMTPServerState.MAIL_FROM_RECEIVED);
-                break;
-            case "RCPT":
-                updateState(state, SMTPServerState.RCPT_RECEIVED);
-                break;
-            case "DATA":
-                updateState(state, SMTPServerState.DATA_RECEIVED);
-                break;
-            case "QUIT":
-                updateState(state, SMTPServerState.QUIT_RECEIVED);
-                break;
-            case "HELP":
-                // if help is not requested already set
-                if(state.getState() != SMTPServerState.HELP_RECEIVED) {
-                    updateState(state, SMTPServerState.HELP_RECEIVED);
-                }
-                break;
-            default:
-                updateState(state, SMTPServerState.MESSAGE_RECEIVED);
+        Integer nextState = getNextState(clientMessageCode, state);
+
+        if(nextState != -1) {
+            state.setPreviousState(state.getState());
+            state.setState(nextState);
         }
 
         // switch roles
@@ -179,7 +173,6 @@ public class SMTPServer {
         buffer.put(newLine);
 
         buffer.flip();
-
 
         socketChannel.write(buffer);
 
