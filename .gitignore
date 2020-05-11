@@ -1,2 +1,5 @@
 /.metadata/
+/.metadata/
+bin/
+.idea
 .DS_Store
